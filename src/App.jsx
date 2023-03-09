@@ -9,6 +9,7 @@ import {
   MessageInput,
   TypingIndicator,
 } from '@chatscope/chat-ui-kit-react';
+import { API_KEY } from '../config';
 
 const systemMessage = {
   role: 'system',
@@ -42,6 +43,11 @@ function App() {
   };
 
   async function processMessageToChatGPT(chatMessages) {
+    // messages is an array of messages
+    // Format messages for chatGPT API
+    // API is expecting objects in format of { role: "user" or "assistant", "content": "message here"}
+    // So we need to reformat
+
     let apiMessages = chatMessages.map((messageObject) => {
       let role = '';
       if (messageObject.sender === 'ChatGPT') {
@@ -52,9 +58,15 @@ function App() {
       return { role: role, content: messageObject.message };
     });
 
+    // Get the request body set up with the model we plan to use
+    // and the messages which we formatted above. We add a system message in the front to'
+    // determine how we want chatGPT to act.
     const apiRequestBody = {
       model: 'gpt-3.5-turbo',
-      messages: [systemMessage, ...apiMessages],
+      messages: [
+        systemMessage, // The system message DEFINES the logic of our chatGPT
+        ...apiMessages, // The messages from our chat with ChatGPT
+      ],
     };
 
     try {
@@ -63,7 +75,7 @@ function App() {
         {
           method: 'POST',
           headers: {
-            Authorization: 'Bearer ' + process.env.REACT_APP_OPENAI_API_KEY,
+            Authorization: 'Bearer ' + API_KEY,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(apiRequestBody),
@@ -96,6 +108,7 @@ function App() {
         <MainContainer>
           <ChatContainer>
             <MessageList
+              scrollBehavior="smooth"
               typingIndicator={
                 typing ? <TypingIndicator content="ChatGPT is typing" /> : null
               }
